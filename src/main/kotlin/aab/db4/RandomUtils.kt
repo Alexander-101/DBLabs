@@ -22,6 +22,10 @@ fun Random.nextString(lenMin: Int = 4, lenMax: Int = 64, chars: CharArray = lett
     return (1..len).map { chars[nextInt(chars.size)] }.joinToString("")
 }
 
+fun Random.nextBoolean(prob: Double): Boolean {
+    return (this.nextDouble() < prob)
+}
+
 /**
  * Generate random UUID
  */
@@ -52,6 +56,14 @@ fun Random.genTimeRanges(
  */
 fun Random.genUuids(cnt: Int): List<UUID> {
     return (1..cnt).map { this.nextUuid() }
+}
+
+inline fun <T> gen(n: Int, block: () -> T): List<T> {
+    return (1..<n).map { block() }
+}
+
+inline fun <T> genDistinct(n: Int, crossinline block: () -> T): List<T> {
+    return (1..n).asSequence().map { block() }.distinct().toList()
 }
 
 /**

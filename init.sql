@@ -32,6 +32,7 @@ create table customers (
     id uuid primary key references users,
     name text not null,
     experience_since date not null,
+    birth_date date not null,
     personal_info jsonb not null default '{}'
 );
 
@@ -89,6 +90,20 @@ create table promotions (
     avalible_user uuid references customers
 );
 
+create table stores (
+    id uuid primary key default uuidv7(),
+    address text not null,
+    priority int not null,
+    schedule jsonb not null
+);
+
+create table store_lots (
+    product_id uuid not null references products,
+    store_id uuid not null references stores,
+    price float8 not null,
+    in_stock int not null
+);
+
 create type order_status as enum ('SCHEDULED', 'IN_PROGRESS', 'COMPLETE', 'CANCELED', 'SUSPENDED');
 create type order_type as enum ('COMMON', 'SPECIAL_MONTHLY_PROMO');
 
@@ -97,19 +112,29 @@ create table orders (
 
     customer_id uuid not null references customers,
     promotion_id uuid references promotions,
-    droid_id uuid not null references droids,
 
     status order_status not null,
     type order_type not null,
 
-    droid_name text not null,
-    address text not null
+    address text not null,
+
+    ordered_for tstzrange not null
+);
+
+create table order_droids (
+    order_id uuid references orders,
+    droid_id uuid references droids,
+    name text not null,
+    primary key (order_id, droid_id)
 );
 
 create table order_products (
     order_id uuid not null references orders,
     product_id uuid not null references products,
     amount int not null,
+    sell_price float8 not null,
+    purchase_price float8 not null,
+    purchase_store uuid not null references stores,
     primary key (order_id, product_id)
 );
 
@@ -132,20 +157,6 @@ create index snack_recommendations_topic_id_idx on snack_recommendations using b
 create index snack_recommendations_experience_idx on snack_recommendations using gist(experience) where experience is not null;
 
 
-create table stores (
-    id uuid primary key default uuidv7(),
-    address text not null,
-    priority int not null,
-    schedule jsonb not null
-);
-
-create table store_lots (
-    product_id uuid not null references products,
-    store_id uuid not null references stores,
-    price float8 not null,
-    in_stock int not null
-);
-
 create table promotion_products (
     promotion_id uuid not null references promotions,
     product_id uuid not null references products,
@@ -162,8 +173,13 @@ create table promotions_topics (
 create table service_log (
     id uuid primary key default uuidv7(),
     technician_id uuid not null references technicians,
-    droid_id uuid not null references droids,
+    order_id uuid not null,
+    droid_id uuid not null,
     serviced_at timestamptz not null,
-    reward float8 not null
+    reward float8 not null,
+
+    foreign key (order_id, droid_id) references order_droids(order_id, droid_id)
 );
+
 create index service_log_technician_id_idx on service_log(technician_id);
+create index service_log_dorid_order_idx on service_log(droid_id, order_id);

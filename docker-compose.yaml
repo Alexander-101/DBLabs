@@ -2,6 +2,7 @@ services:
   postgres:
     container_name: db-lab4
     image: postgres:18-alpine
+    shm_size: 1g
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
